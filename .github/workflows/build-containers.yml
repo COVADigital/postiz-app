@@ -2,9 +2,9 @@ name: Build & Push COVA Digital Image
 
 on:
   push:
-    branches: [ "main" ]       # build on pushes to main
-    tags: [ "*" ]              # and on any tag (optional)
-  workflow_dispatch: {}        # allow manual runs
+    branches: [ "main" ]
+    tags: [ "*" ]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -33,14 +33,18 @@ jobs:
       - name: Compute version/tag
         id: vars
         run: |
-          # Use tag name if this is a tag push, otherwise use branch name
           echo "containerver=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute lowercase owner
+        id: owner
+        run: |
+          echo "lower_owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - name: Build & Push multi-arch image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile.dev            # keep if that's your intended Dockerfile
+          file: Dockerfile.dev
           push: true
           provenance: false
           sbom: false
@@ -48,5 +52,5 @@ jobs:
           build-args: |
             NEXT_PUBLIC_VERSION=${{ steps.vars.outputs.containerver }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/postiz-app:${{ steps.vars.outputs.containerver }}
-            ghcr.io/${{ github.repository_owner }}/postiz-app:latest
+            ghcr.io/${{ steps.owner.outputs.lower_owner }}/postiz-app:${{ steps.vars.outputs.containerver }}
+            ghcr.io/${{ steps.owner.outputs.lower_owner }}/postiz-app:latest
